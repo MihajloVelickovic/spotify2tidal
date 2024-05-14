@@ -208,11 +208,21 @@ class Tidal:
         artist: str
             Artist of the track
         """
-        tracks = self.tidal_session.search(field="track", value=name).tracks
+        tracks = self.tidal_session.search(name, [tidalapi.Track])
 
-        for t in tracks:
-            if t.artist.name.lower() == artist.lower():
+        for tracklist in tracks.values():
+            if tracklist is not None:
+                if isinstance(tracklist, tidalapi.Track):
+                    return _check(tracklist)
+                else:
+                    for track in tracklist:
+                        return _check(track)
+
+    def _check(self, track):
+        if track.artist is not None:
+            if track.artist.name.lower() == artist.lower():
                 return t.id
+
 
     def _search_album(self, name, artist):
         """Search tidal and return the album ID.
