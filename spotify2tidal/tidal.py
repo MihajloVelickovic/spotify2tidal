@@ -16,8 +16,8 @@ class Tidal:
     password: str
         Tidal password
     """
-    def __init__(self, username, password):
-        self.tidal_session = self._connect(username, password)
+    def __init__(self):
+        self.tidal_session = self._connect()
 
     @property
     def own_playlists(self):
@@ -168,18 +168,9 @@ class Tidal:
 
         return r.json()["uuid"]
 
-    def _connect(self, username, password):
-        """Connect to tidal and return a session object.
-
-        Parameters
-        ----------
-        username: str
-            Tidal username
-        password: str
-            Tidal password
-        """
+    def _connect(self):
         tidal_session = tidalapi.Session()
-        tidal_session.login(username, password)
+        tidal_session.login_oauth_simple()
         return tidal_session
 
     def _delete_playlist(self, playlist_id):
@@ -213,16 +204,19 @@ class Tidal:
         for tracklist in tracks.values():
             if tracklist is not None:
                 if isinstance(tracklist, tidalapi.Track):
-                    return _check(tracklist)
+                    return _check_song_album(tracklist)
                 else:
                     for track in tracklist:
-                        return _check(track)
+                        return _check_song_album(track)
 
-    def _check(self, item):
+    def _check_song_album(self, item):
         if item.artist is not None:
             if item.artist.name.lower() == artist.lower():
                 return item.id
 
+    def _check_artist(self, artist):
+        if artist.name.lower() == name.lower():
+            return artist.id
 
     def _search_album(self, name, artist):
         """Search tidal and return the album ID.
@@ -237,11 +231,12 @@ class Tidal:
         albums = self.tidal_session.search(field="album", value=name)
 
         for albumlist in albums.values():
-            if isinstance(albumlist, tidalapi.Album):
-                return _check(albumlist)
-            else:
-                for album in albumlist:
-                    return _check(album)
+            if albumlist is not None:
+                if isinstance(albumlist, tidalapi.Album):
+                    return _check_song_album(albumlist)
+                else:
+                    for album in albumlist:
+                        return _check_song_album(album)
             
 
     def _search_artist(self, name):
@@ -252,8 +247,12 @@ class Tidal:
         name: str
             Name of the artist
         """
-        artists = self.tidal_session.search(field="artist", value=name).artists
+        artists = self.tidal_session.search(field="artist", value=name)
 
-        for a in artists:
-            if a.name.lower() == name.lower():
-                return a.id
+        for artistlist in artists:
+            if artistlist is not None:
+                if isinstance(artistlist, tidalapi.Artist):
+                    return _check_artist(artistlist)
+                else:
+                    for artist in artistlist:
+                        return _check_artist(artist)

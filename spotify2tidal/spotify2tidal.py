@@ -43,8 +43,6 @@ class Spotify2Tidal:
     """
     def __init__(
         self,
-        tidal_username,
-        tidal_password,
         spotify_username,
         spotify_client_id,
         spotify_client_secret,
@@ -58,18 +56,18 @@ class Spotify2Tidal:
             spotify_redirect_uri,
             spotify_discover_weekly_id,
         )
-        self.tidal = Tidal(tidal_username, tidal_password)
+        self.tidal = Tidal()
 
     def copy_all_spotify_playlists(self):
         """Create all your spotify playlists in tidal."""
-        for playlist in self.spotify.own_playlists:
+        for playlist in reversed(self.spotify.own_playlists):
             self._add_spotify_playlist_to_tidal(
                 spotify_playlist=playlist, delete_existing=True
             )
 
     def copy_all_saved_spotify_albums(self):
         """Add all your saved albums to Tidal's favorites."""
-        for album in self.spotify.saved_albums:
+        for album in reversed(self.spotify.saved_albums):
             artist_name = album["album"]["artists"][0]["name"]
             album_name = album["album"]["name"]
 
@@ -77,7 +75,7 @@ class Spotify2Tidal:
 
     def copy_all_saved_spotify_artists(self):
         """Add all your saved artists to Tidal's favorites."""
-        for artist in self.spotify.saved_artists:
+        for artist in reversed(self.spotify.saved_artists):
             self.tidal.save_artist(artist["name"])
 
     def copy_all_saved_spotify_tracks(self):
